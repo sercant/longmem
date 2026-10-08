@@ -1,6 +1,7 @@
 """PRO-LONG runtime: logs coding session events into local append-only JSONL memory."""
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import subprocess
@@ -60,7 +61,7 @@ def resolve_workspace_root(
         start = start.parent
 
     # 1. Attempt git rev-parse --show-toplevel (works for both standard repos and worktrees)
-    try:
+    with contextlib.suppress(Exception):
         res = subprocess.run(
             ["git", "rev-parse", "--show-toplevel"],
             cwd=str(start),
@@ -71,8 +72,6 @@ def resolve_workspace_root(
         )
         if res.returncode == 0 and res.stdout.strip():
             return Path(res.stdout.strip()).resolve()
-    except Exception:
-        pass
 
     # 2. Fallback: walk up looking for .git (file for worktree or dir for standard repo)
     for p in [start, *start.parents]:
