@@ -121,6 +121,7 @@ class TestRuntime(unittest.TestCase):
             text=True,
             capture_output=True,
             cwd=str(self.root),
+            check=False,
         )
         self.assertEqual(res.returncode, 0)
         self.assertIn("{}", res.stdout)

@@ -45,7 +45,7 @@ def detect_clients(base_dir: Path | None = None) -> list[str]:
 def normalize_clients(clients: list[str] | tuple[str, ...]) -> list[str]:
     """Validate and normalize client names."""
     if not isinstance(clients, (list, tuple)):
-        raise ValueError("clients must be a list of supported client names")
+        raise TypeError("clients must be a list of supported client names")
 
     normalized: list[str] = []
     for raw in clients:

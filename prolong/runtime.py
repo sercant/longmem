@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """PRO-LONG runtime: logs coding session events into local append-only JSONL memory."""
 from __future__ import annotations
 
@@ -6,9 +5,10 @@ import json
 import os
 import subprocess
 import sys
+from collections.abc import Mapping
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any
 
 try:
     import fcntl
@@ -67,6 +67,7 @@ def resolve_workspace_root(
             capture_output=True,
             text=True,
             timeout=2,
+            check=False,
         )
         if res.returncode == 0 and res.stdout.strip():
             return Path(res.stdout.strip()).resolve()
