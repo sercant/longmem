@@ -26,28 +26,20 @@ Works natively with **Claude Code** and **Codex**. Pure Python 3 (standard libra
 
 ### 1. Run directly with uvx (Zero Installation)
 
-From the `pro-long-2` directory:
+`uvx` builds `prolong` from the GitHub repository in an isolated environment and runs it without requiring manual installation. Prefix any command with `uvx --from git+ssh://git@github.com/sercant/pro-long-2`:
 
 ```bash
-cd /path/to/pro-long-2
-uvx . --version
-```
+# Check version
+uvx --from git+ssh://git@github.com/sercant/pro-long-2 prolong --version
 
-`uvx` builds `prolong` in an isolated environment and runs it without requiring manual installation. Prefix any command with `uvx .`:
-
-```bash
 # Initialize globally
-uvx . init --global
+uvx --from git+ssh://git@github.com/sercant/pro-long-2 prolong init --global
 
 # Check global status
-uvx . status --global
+uvx --from git+ssh://git@github.com/sercant/pro-long-2 prolong status --global
 ```
 
-Or run from any directory:
-
-```bash
-uvx --from /path/to/pro-long-2 prolong init --global
-```
+To pin a branch, tag, or commit, append `@<ref>` to the URL, e.g. `git+ssh://git@github.com/sercant/pro-long-2@develop`.
 
 ### 2. Or Install with uv / pip
 
@@ -171,14 +163,14 @@ prolong status --json
 ### `deinit` (alias: `uninstall`)
 ```bash
 # Deinitialize globally (preserves logs)
-uvx . deinit --global
+uvx --from git+ssh://git@github.com/sercant/pro-long-2 prolong deinit --global
 # or: prolong deinit --global
 
 # Deinitialize globally and purge ~/.prolong
-uvx . deinit --global --purge
+uvx --from git+ssh://git@github.com/sercant/pro-long-2 prolong deinit --global --purge
 
 # Deinitialize from a specific project
-uvx . deinit --dir /path/to/project [--purge]
+uvx --from git+ssh://git@github.com/sercant/pro-long-2 prolong deinit --dir /path/to/project [--purge]
 ```
 
 ---
