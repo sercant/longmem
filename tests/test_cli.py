@@ -1,4 +1,4 @@
-"""Unit tests for the prolong CLI."""
+"""Unit tests for the longmem CLI."""
 import io
 import os
 import tempfile
@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from prolong.cli import main
+from longmem.cli import main
 
 
 class TestCli(unittest.TestCase):
@@ -21,7 +21,7 @@ class TestCli(unittest.TestCase):
         with self.assertRaises(SystemExit) as cm, patch("sys.stdout", new_callable=io.StringIO) as mock_out:
             main(["--version"])
         self.assertEqual(cm.exception.code, 0)
-        self.assertIn("prolong 0.1.1", mock_out.getvalue())
+        self.assertIn("longmem 0.1.1", mock_out.getvalue())
 
     def test_cli_local_lifecycle(self):
         project = self.home / "repo"
@@ -31,8 +31,8 @@ class TestCli(unittest.TestCase):
         with self.assertRaises(SystemExit) as cm, patch("sys.stdout", new_callable=io.StringIO) as mock_out:
             main(["init", "--dir", str(project), "--client", "claude-code"])
         self.assertEqual(cm.exception.code, 0)
-        self.assertIn("PRO-LONG initialized in", mock_out.getvalue())
-        self.assertTrue((project / ".prolong" / "log.jsonl").exists())
+        self.assertIn("LongMem initialized in", mock_out.getvalue())
+        self.assertTrue((project / ".longmem" / "log.jsonl").exists())
 
         # 2. status
         with self.assertRaises(SystemExit) as cm, patch("sys.stdout", new_callable=io.StringIO) as mock_out:
@@ -44,8 +44,8 @@ class TestCli(unittest.TestCase):
         with self.assertRaises(SystemExit) as cm, patch("sys.stdout", new_callable=io.StringIO) as mock_out:
             main(["deinit", "--dir", str(project), "--purge"])
         self.assertEqual(cm.exception.code, 0)
-        self.assertIn("PRO-LONG deinitialized from", mock_out.getvalue())
-        self.assertFalse((project / ".prolong").exists())
+        self.assertIn("LongMem deinitialized from", mock_out.getvalue())
+        self.assertFalse((project / ".longmem").exists())
 
     def test_cli_global_lifecycle(self):
         with patch.dict(os.environ, {"HOME": str(self.home)}), patch("pathlib.Path.home", return_value=self.home):
@@ -53,8 +53,8 @@ class TestCli(unittest.TestCase):
             with self.assertRaises(SystemExit) as cm, patch("sys.stdout", new_callable=io.StringIO) as mock_out:
                 main(["init", "--global", "--client", "claude-code,codex"])
             self.assertEqual(cm.exception.code, 0)
-            self.assertIn("PRO-LONG initialized globally", mock_out.getvalue())
-            self.assertTrue((self.home / ".prolong" / "runtime.py").exists())
+            self.assertIn("LongMem initialized globally", mock_out.getvalue())
+            self.assertTrue((self.home / ".longmem" / "runtime.py").exists())
 
             # 2. global status
             with self.assertRaises(SystemExit) as cm, patch("sys.stdout", new_callable=io.StringIO) as mock_out:
@@ -66,8 +66,8 @@ class TestCli(unittest.TestCase):
             with self.assertRaises(SystemExit) as cm, patch("sys.stdout", new_callable=io.StringIO) as mock_out:
                 main(["deinit", "--global", "--purge"])
             self.assertEqual(cm.exception.code, 0)
-            self.assertIn("PRO-LONG deinitialized globally", mock_out.getvalue())
-            self.assertFalse((self.home / ".prolong").exists())
+            self.assertIn("LongMem deinitialized globally", mock_out.getvalue())
+            self.assertFalse((self.home / ".longmem").exists())
 
 
 if __name__ == "__main__":

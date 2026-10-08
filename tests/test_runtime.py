@@ -1,4 +1,4 @@
-"""Unit tests for PRO-LONG runtime."""
+"""Unit tests for LongMem runtime."""
 import json
 import subprocess
 import sys
@@ -6,8 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from prolong.runtime import (
-    init_prolong_dir,
+from longmem.runtime import (
+    init_longmem_dir,
     is_self_read,
     record,
     resolve_workspace_root,
@@ -22,15 +22,15 @@ class TestRuntime(unittest.TestCase):
     def tearDown(self):
         self.temp_dir.cleanup()
 
-    def test_init_prolong_dir(self):
-        prolong_dir = init_prolong_dir(self.root)
-        self.assertTrue(prolong_dir.is_dir())
+    def test_init_longmem_dir(self):
+        longmem_dir = init_longmem_dir(self.root)
+        self.assertTrue(longmem_dir.is_dir())
 
-        gitignore = prolong_dir / ".gitignore"
+        gitignore = longmem_dir / ".gitignore"
         self.assertTrue(gitignore.is_file())
         self.assertEqual(gitignore.read_text(encoding="utf-8"), "*\n")
 
-        log_file = prolong_dir / "log.jsonl"
+        log_file = longmem_dir / "log.jsonl"
         self.assertTrue(log_file.is_file())
 
     def test_resolve_workspace_root_git(self):
@@ -49,8 +49,8 @@ class TestRuntime(unittest.TestCase):
     def test_is_self_read(self):
         self.assertFalse(is_self_read(None))
         self.assertFalse(is_self_read({"command": "git status"}))
-        self.assertTrue(is_self_read({"command": "rg foo .prolong/log.jsonl"}))
-        self.assertTrue(is_self_read("cat .prolong/log.jsonl"))
+        self.assertTrue(is_self_read({"command": "rg foo .longmem/log.jsonl"}))
+        self.assertTrue(is_self_read("cat .longmem/log.jsonl"))
 
     def test_record_lifecycle_events(self):
         # 1. Session start
@@ -60,7 +60,7 @@ class TestRuntime(unittest.TestCase):
             root=self.root,
         )
 
-        log_file = self.root / ".prolong" / "log.jsonl"
+        log_file = self.root / ".longmem" / "log.jsonl"
         self.assertTrue(log_file.exists())
         lines = log_file.read_text(encoding="utf-8").strip().splitlines()
         self.assertEqual(len(lines), 1)
@@ -88,12 +88,12 @@ class TestRuntime(unittest.TestCase):
             {
                 "hook_event_name": "PostToolUse",
                 "session_id": "sess-1",
-                "tool_input": {"command": "rg auth .prolong/log.jsonl"},
+                "tool_input": {"command": "rg auth .longmem/log.jsonl"},
             },
             root=self.root,
         )
         lines = log_file.read_text(encoding="utf-8").strip().splitlines()
-        self.assertEqual(len(lines), 2, "self-reads of .prolong/log.jsonl must be filtered out")
+        self.assertEqual(len(lines), 2, "self-reads of .longmem/log.jsonl must be filtered out")
 
         # 4. Normal tool call
         record(
@@ -109,7 +109,7 @@ class TestRuntime(unittest.TestCase):
         self.assertEqual(len(lines), 3)
 
     def test_subprocess_execution(self):
-        runtime_py = Path(__file__).resolve().parent.parent / "prolong" / "runtime.py"
+        runtime_py = Path(__file__).resolve().parent.parent / "longmem" / "runtime.py"
         event = {
             "hook_event_name": "SessionStart",
             "session_id": "subp-1",
@@ -126,9 +126,9 @@ class TestRuntime(unittest.TestCase):
         self.assertEqual(res.returncode, 0)
         self.assertIn("{}", res.stdout)
 
-        log_file = self.root / ".prolong" / "log.jsonl"
+        log_file = self.root / ".longmem" / "log.jsonl"
         self.assertTrue(log_file.exists())
-        gitignore = self.root / ".prolong" / ".gitignore"
+        gitignore = self.root / ".longmem" / ".gitignore"
         self.assertTrue(gitignore.exists())
         self.assertEqual(gitignore.read_text(encoding="utf-8"), "*\n")
 

@@ -1,11 +1,11 @@
 ---
-name: prolong
-description: Recover and use durable coding-session history from PRO-LONG's local append-only log. Use on long-running coding tasks, after context compaction or session resume, when reconstructing prior decisions or tool results, or before repeating work that may already have been attempted.
+name: longmem
+description: Recover and use durable coding-session history from LongMem's local append-only log. Use on long-running coding tasks, after context compaction or session resume, when reconstructing prior decisions or tool results, or before repeating work that may already have been attempted.
 ---
 
-# PRO-LONG memory
+# LongMem memory
 
-Use `.prolong/log.jsonl` as external memory for the current project. Event adapters maintain it automatically; retrieve only the history relevant to the current question.
+Use `.longmem/log.jsonl` as external memory for the current project. Event adapters maintain it automatically; retrieve only the history relevant to the current question.
 
 ## Retrieve history
 
@@ -18,9 +18,9 @@ Use `.prolong/log.jsonl` as external memory for the current project. Event adapt
 Examples:
 
 ```bash
-rg -n 'migration|schema|failed' .prolong/log.jsonl
-tail -n 80 .prolong/log.jsonl
-jq -c 'select(.type == "tool_result")' .prolong/log.jsonl | tail -n 20
+rg -n 'migration|schema|failed' .longmem/log.jsonl
+tail -n 80 .longmem/log.jsonl
+jq -c 'select(.type == "tool_result")' .longmem/log.jsonl | tail -n 20
 ```
 
 ## Safety and context discipline

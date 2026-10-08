@@ -1,10 +1,10 @@
-# PRO-LONG (Python Edition)
+# LongMem (Python Edition)
 
 **Durable, programmatic memory for coding agents.**
 
 Long tasks outlive context windows. After compaction or a fresh session, coding agents lose earlier decisions, repeat failed work, and miss important tool outputs.
 
-PRO-LONG records coding-session events in a local, append-only JSONL log (`.prolong/log.jsonl`) and equips the agent with a skill for searching only the history it needs.
+LongMem records coding-session events in a local, append-only JSONL log (`.longmem/log.jsonl`) and equips the agent with a skill for searching only the history it needs.
 
 Works natively with **Claude Code** and **Codex**. Pure Python 3 (standard library only) with zero external dependencies.
 
@@ -14,11 +14,11 @@ Works natively with **Claude Code** and **Codex**. Pure Python 3 (standard libra
 
 - **Zero Dependencies**: Pure Python 3 standard library. No npm, no node, no heavy frameworks.
 - **Global & Local Workflows**:
-  - **Global Mode** (`prolong init --global`): Installs once into `~/.claude/` and `~/.codex/`. Every git repository or workspace automatically initializes its own isolated memory on session start.
-  - **Local Mode** (`prolong init`): Explicitly initializes a single project repository.
-- **Automatic Gitignore**: On `SessionStart`, PRO-LONG initializes `.prolong/` at the root of the git repository and creates `.prolong/.gitignore` with `*` so all memory logs remain untracked by Git automatically.
+  - **Global Mode** (`longmem init --global`): Installs once into `~/.claude/` and `~/.codex/`. Every git repository or workspace automatically initializes its own isolated memory on session start.
+  - **Local Mode** (`longmem init`): Explicitly initializes a single project repository.
+- **Automatic Gitignore**: On `SessionStart`, LongMem initializes `.longmem/` at the root of the git repository and creates `.longmem/.gitignore` with `*` so all memory logs remain untracked by Git automatically.
 - **Safe Coexistence**: Preserves existing hook configurations (such as `proshort`, `rtk`, or custom user hooks) and existing instructions in `CLAUDE.md` and `AGENTS.md`.
-- **Anti-Recursion / Self-Read Filtering**: Reads of `.prolong/log.jsonl` are automatically excluded from recording, preventing memory queries from duplicating into the log.
+- **Anti-Recursion / Self-Read Filtering**: Reads of `.longmem/log.jsonl` are automatically excluded from recording, preventing memory queries from duplicating into the log.
 
 ---
 
@@ -26,43 +26,43 @@ Works natively with **Claude Code** and **Codex**. Pure Python 3 (standard libra
 
 ### 1. Run directly with uvx (Zero Installation)
 
-`uvx` builds `prolong` from the GitHub repository in an isolated environment and runs it without requiring manual installation. Prefix any command with `uvx --from git+ssh://git@github.com/sercant/pro-long-2`:
+`uvx` builds `longmem` from the GitHub repository in an isolated environment and runs it without requiring manual installation. Prefix any command with `uvx --from git+ssh://git@github.com/sercant/longmem`:
 
 ```bash
 # Check version
-uvx --from git+ssh://git@github.com/sercant/pro-long-2 prolong --version
+uvx --from git+ssh://git@github.com/sercant/longmem longmem --version
 
 # Initialize globally
-uvx --from git+ssh://git@github.com/sercant/pro-long-2 prolong init --global
+uvx --from git+ssh://git@github.com/sercant/longmem longmem init --global
 
 # Check global status
-uvx --from git+ssh://git@github.com/sercant/pro-long-2 prolong status --global
+uvx --from git+ssh://git@github.com/sercant/longmem longmem status --global
 ```
 
-To pin a branch, tag, or commit, append `@<ref>` to the URL, e.g. `git+ssh://git@github.com/sercant/pro-long-2@develop`.
+To pin a branch, tag, or commit, append `@<ref>` to the URL, e.g. `git+ssh://git@github.com/sercant/longmem@develop`.
 
 ### 2. Or Install with uv / pip
 
 ```bash
 # Install as a global CLI tool via uv
-uv tool install --editable /path/to/pro-long-2
+uv tool install --editable /path/to/longmem
 
 # Or install in active virtualenv
-pip install -e /path/to/pro-long-2
+pip install -e /path/to/longmem
 ```
 
 After installation, run commands directly:
 
 ```bash
-prolong init --global
-prolong status --global
+longmem init --global
+longmem status --global
 ```
 
 This:
-1. Copies the standalone runtime to `~/.prolong/runtime.py`.
+1. Copies the standalone runtime to `~/.longmem/runtime.py`.
 2. Registers lifecycle hooks in `~/.claude/settings.json` and `~/.codex/hooks.json`.
 3. Injects retrieval instructions into `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md` (and `~/.agents/AGENTS.md`).
-4. Installs the `prolong` skill into `~/.claude/skills/prolong/` and `~/.agents/skills/prolong/`.
+4. Installs the `longmem` skill into `~/.claude/skills/longmem/` and `~/.agents/skills/longmem/`.
 
 ### 3. Initialize Per-Project (Optional)
 
@@ -70,7 +70,7 @@ To initialize memory in only a specific project directory:
 
 ```bash
 cd /path/to/project
-prolong init
+longmem init
 ```
 
 ---
@@ -79,20 +79,20 @@ prolong init
 
 ```mermaid
 flowchart LR
-    Agent["Coding Agent (Claude Code / Codex)"] -->|"Lifecycle hooks (SessionStart, Prompt, Tool, Stop)"| Runtime["~/.prolong/runtime.py"]
-    Runtime -->|"Find git root & ensure .gitignore (*)"| Log[".prolong/log.jsonl"]
+    Agent["Coding Agent (Claude Code / Codex)"] -->|"Lifecycle hooks (SessionStart, Prompt, Tool, Stop)"| Runtime["~/.longmem/runtime.py"]
+    Runtime -->|"Find git root & ensure .gitignore (*)"| Log[".longmem/log.jsonl"]
     Log -->|"Agent retrieves via rg / jq / grep"| Agent
 ```
 
 1. When a session begins, the `SessionStart` hook fires.
 2. `runtime.py` resolves the git repository root (`git rev-parse --show-toplevel`).
-3. It creates `<repo_root>/.prolong/` with `.gitignore` containing `*` and creates `log.jsonl`.
+3. It creates `<repo_root>/.longmem/` with `.gitignore` containing `*` and creates `log.jsonl`.
 4. Subsequent prompts, tool executions, and assistant messages are recorded as JSON lines.
-5. When prior context is needed, the agent searches `.prolong/log.jsonl` using normal shell tools (`rg`, `grep`, `jq`, Python) without loading whole transcripts into model context.
+5. When prior context is needed, the agent searches `.longmem/log.jsonl` using normal shell tools (`rg`, `grep`, `jq`, Python) without loading whole transcripts into model context.
 
 ### Log Format
 
-Each line in `.prolong/log.jsonl` is a self-contained JSON object:
+Each line in `.longmem/log.jsonl` is a self-contained JSON object:
 
 ```json
 {
@@ -123,13 +123,13 @@ The agent skill teaches models to search the log narrowly:
 
 ```bash
 # Find when a file or decision was mentioned
-rg -n 'migration|schema|failed' .prolong/log.jsonl
+rg -n 'migration|schema|failed' .longmem/log.jsonl
 
 # Review recent session entries
-tail -n 50 .prolong/log.jsonl
+tail -n 50 .longmem/log.jsonl
 
 # Filter for tool execution results
-jq -c 'select(.type == "tool_result")' .prolong/log.jsonl | tail -n 20
+jq -c 'select(.type == "tool_result")' .longmem/log.jsonl | tail -n 20
 ```
 
 ---
@@ -139,38 +139,38 @@ jq -c 'select(.type == "tool_result")' .prolong/log.jsonl | tail -n 20
 ### `init`
 ```bash
 # Global install (all repos)
-prolong init --global
+longmem init --global
 
 # Specify clients explicitly
-prolong init --global --client claude-code,codex
+longmem init --global --client claude-code,codex
 
 # Local project install
-prolong init --dir /path/to/project
+longmem init --dir /path/to/project
 ```
 
 ### `status`
 ```bash
 # Check global installation status
-prolong status --global
+longmem status --global
 
 # Check current project status
-prolong status
+longmem status
 
 # Output machine-readable JSON
-prolong status --json
+longmem status --json
 ```
 
 ### `deinit` (alias: `uninstall`)
 ```bash
 # Deinitialize globally (preserves logs)
-uvx --from git+ssh://git@github.com/sercant/pro-long-2 prolong deinit --global
-# or: prolong deinit --global
+uvx --from git+ssh://git@github.com/sercant/longmem longmem deinit --global
+# or: longmem deinit --global
 
-# Deinitialize globally and purge ~/.prolong
-uvx --from git+ssh://git@github.com/sercant/pro-long-2 prolong deinit --global --purge
+# Deinitialize globally and purge ~/.longmem
+uvx --from git+ssh://git@github.com/sercant/longmem longmem deinit --global --purge
 
 # Deinitialize from a specific project
-uvx --from git+ssh://git@github.com/sercant/pro-long-2 prolong deinit --dir /path/to/project [--purge]
+uvx --from git+ssh://git@github.com/sercant/longmem longmem deinit --dir /path/to/project [--purge]
 ```
 
 ---

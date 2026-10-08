@@ -1,12 +1,12 @@
 """Unit tests for block management."""
 import unittest
 
-from prolong.blocks import (
+from longmem.blocks import (
     has_managed_block,
     remove_managed_block,
     upsert_managed_block,
 )
-from prolong.constants import INSTRUCTIONS_BLOCK
+from longmem.constants import INSTRUCTIONS_BLOCK
 
 
 class TestBlocks(unittest.TestCase):
@@ -29,10 +29,10 @@ class TestBlocks(unittest.TestCase):
 
     def test_upsert_managed_block_replace(self):
         first = upsert_managed_block("# Header\n", INSTRUCTIONS_BLOCK)
-        custom_block = "<!-- prolong:start -->\n## New content\n<!-- prolong:end -->"
+        custom_block = "<!-- longmem:start -->\n## New content\n<!-- longmem:end -->"
         second = upsert_managed_block(first, custom_block)
         self.assertIn("## New content", second)
-        self.assertNotIn("PRO-LONG maintains a local", second)
+        self.assertNotIn("LongMem maintains a local", second)
         self.assertTrue(second.startswith("# Header\n\n"))
 
     def test_remove_managed_block(self):

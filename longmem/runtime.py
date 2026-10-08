@@ -1,4 +1,4 @@
-"""PRO-LONG runtime: logs coding session events into local append-only JSONL memory."""
+"""LongMem runtime: logs coding session events into local append-only JSONL memory."""
 from __future__ import annotations
 
 import contextlib
@@ -82,24 +82,24 @@ def resolve_workspace_root(
     return start
 
 
-def init_prolong_dir(root: Path) -> Path:
-    """Ensure <root>/.prolong exists with a .gitignore containing '*'."""
-    prolong_dir = root.resolve() / ".prolong"
-    prolong_dir.mkdir(parents=True, exist_ok=True)
+def init_longmem_dir(root: Path) -> Path:
+    """Ensure <root>/.longmem exists with a .gitignore containing '*'."""
+    longmem_dir = root.resolve() / ".longmem"
+    longmem_dir.mkdir(parents=True, exist_ok=True)
 
-    gitignore_file = prolong_dir / ".gitignore"
+    gitignore_file = longmem_dir / ".gitignore"
     if not gitignore_file.exists():
         gitignore_file.write_text("*\n", encoding="utf-8")
 
-    log_file = prolong_dir / "log.jsonl"
+    log_file = longmem_dir / "log.jsonl"
     if not log_file.exists():
         log_file.touch()
 
-    return prolong_dir
+    return longmem_dir
 
 
 def event_type(event: Mapping[str, Any]) -> str:
-    """Map client hook event names to canonical PRO-LONG event types."""
+    """Map client hook event names to canonical LongMem event types."""
     name = str(event.get("hook_event_name") or event.get("type") or "event")
     lower = name.lower()
     if "session" in lower and ("start" in lower or "created" in lower):
@@ -132,14 +132,14 @@ def event_type(event: Mapping[str, Any]) -> str:
 
 
 def is_self_read(payload: Any) -> bool:
-    """Detect if a tool call/result is reading or searching .prolong/log.jsonl."""
+    """Detect if a tool call/result is reading or searching .longmem/log.jsonl."""
     if payload is None:
         return False
     try:
         serialized = json.dumps(payload)
     except Exception:
         serialized = str(payload)
-    return ".prolong/log.jsonl" in serialized
+    return ".longmem/log.jsonl" in serialized
 
 
 def default_json_serializer(obj: Any) -> Any:
@@ -158,7 +158,7 @@ def record(
     event: Mapping[str, Any],
     root: Path | None = None,
 ) -> None:
-    """Record an event into the project's .prolong/log.jsonl."""
+    """Record an event into the project's .longmem/log.jsonl."""
     t = event_type(event)
 
     # Filter out self-reads to prevent memory feedback loops
@@ -174,8 +174,8 @@ def record(
             return
 
     repo_root = root or resolve_workspace_root(event=event)
-    prolong_dir = init_prolong_dir(repo_root)
-    log_file = prolong_dir / "log.jsonl"
+    longmem_dir = init_longmem_dir(repo_root)
+    log_file = longmem_dir / "log.jsonl"
 
     session_id = (
         event.get("session_id")
@@ -215,7 +215,7 @@ def parse_client_arg(argv: list[str]) -> str:
     i = 0
     while i < len(argv):
         arg = argv[i]
-        if arg in ("--hook", "--prolong-hook", "-c", "--client"):
+        if arg in ("--hook", "--longmem-hook", "-c", "--client"):
             if i + 1 < len(argv):
                 client = argv[i + 1]
                 break
@@ -248,7 +248,7 @@ def main() -> None:
     try:
         record(client, payload)
     except Exception as exc:
-        sys.stderr.write(f"PRO-LONG hook warning: {exc}\n")
+        sys.stderr.write(f"LongMem hook warning: {exc}\n")
 
     sys.stdout.write("{}\n")
     sys.stdout.flush()

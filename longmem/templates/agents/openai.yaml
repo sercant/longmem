@@ -1,0 +1,4 @@
+interface:
+  display_name: "LongMem Memory"
+  short_description: "Searchable memory for long coding sessions"
+  default_prompt: "Use $longmem to recover the durable history of this coding task."

@@ -1,4 +1,4 @@
-"""Installer, uninstaller, and client adapter configurations for PRO-LONG."""
+"""Installer, uninstaller, and client adapter configurations for LongMem."""
 from __future__ import annotations
 
 import json
@@ -7,19 +7,19 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from prolong.blocks import (
+from longmem.blocks import (
     has_managed_block,
     remove_managed_block,
     upsert_managed_block,
 )
-from prolong.constants import (
+from longmem.constants import (
     CLAUDE_HOOK_EVENTS,
     CODEX_HOOK_EVENTS,
     INSTRUCTIONS_BLOCK,
     PACKAGE_VERSION,
     SUPPORTED_CLIENTS,
 )
-from prolong.io import atomic_write_text, file_size, read_text, remove_path
+from longmem.io import atomic_write_text, file_size, read_text, remove_path
 
 
 class ConfigurationError(ValueError):
@@ -82,8 +82,8 @@ def write_json_file(path: Path, data: dict[str, Any]) -> None:
     atomic_write_text(path, json.dumps(data, indent=2) + "\n")
 
 
-def is_prolong_handler(handler: Any, client: str) -> bool:
-    """Check whether a hook handler is managed by prolong."""
+def is_longmem_handler(handler: Any, client: str) -> bool:
+    """Check whether a hook handler is managed by longmem."""
     if not isinstance(handler, dict) or handler.get("type") != "command":
         return False
 
@@ -92,19 +92,19 @@ def is_prolong_handler(handler: Any, client: str) -> bool:
     args_str = " ".join(str(a) for a in args) if isinstance(args, list) else ""
     full_cmd = f"{command} {args_str}".replace("\\", "/")
 
-    return ("prolong/runtime.py" in full_cmd or ".prolong/runtime.py" in full_cmd) and (
-        f"--hook {client}" in full_cmd or f"--prolong-hook {client}" in full_cmd or client in full_cmd
+    return ("longmem/runtime.py" in full_cmd or ".longmem/runtime.py" in full_cmd) and (
+        f"--hook {client}" in full_cmd or f"--longmem-hook {client}" in full_cmd or client in full_cmd
     )
 
 
-def is_prolong_hook_group(group: Any, client: str) -> bool:
-    """Check whether a hook group contains a prolong handler."""
+def is_longmem_hook_group(group: Any, client: str) -> bool:
+    """Check whether a hook group contains a longmem handler."""
     if not isinstance(group, dict):
         return False
     hooks = group.get("hooks")
     if not isinstance(hooks, list):
         return False
-    return any(is_prolong_handler(h, client) for h in hooks)
+    return any(is_longmem_handler(h, client) for h in hooks)
 
 
 def _install_client_hooks(
@@ -123,8 +123,8 @@ def _install_client_hooks(
     for event in events:
         raw_groups = hooks.get(event)
         groups = list(raw_groups) if isinstance(raw_groups, list) else []
-        # Keep non-prolong groups
-        filtered = [g for g in groups if not is_prolong_hook_group(g, client)]
+        # Keep non-longmem groups
+        filtered = [g for g in groups if not is_longmem_hook_group(g, client)]
         filtered.append({"hooks": [handler_factory(event)]})
         hooks[event] = filtered
 
@@ -136,7 +136,7 @@ def _uninstall_client_hooks(
     events: tuple[str, ...],
     client: str,
 ) -> None:
-    """Safely remove only prolong hooks from a client configuration file."""
+    """Safely remove only longmem hooks from a client configuration file."""
     if not config_path.exists():
         return
     config = read_json_file(config_path)
@@ -148,7 +148,7 @@ def _uninstall_client_hooks(
         raw_groups = hooks.get(event)
         if not isinstance(raw_groups, list):
             continue
-        filtered = [g for g in raw_groups if not is_prolong_hook_group(g, client)]
+        filtered = [g for g in raw_groups if not is_longmem_hook_group(g, client)]
         if filtered:
             hooks[event] = filtered
         else:
@@ -253,25 +253,25 @@ def init_global(
     clients: list[str] | None = None,
     home: Path | None = None,
 ) -> dict[str, Any]:
-    """Initialize PRO-LONG globally for all repositories."""
+    """Initialize LongMem globally for all repositories."""
     user_home = (home or Path.home()).resolve()
     target_clients = normalize_clients(clients if clients is not None else detect_clients(user_home))
 
     # 1. Install global runtime script
-    runtime_dest = user_home / ".prolong" / "runtime.py"
+    runtime_dest = user_home / ".longmem" / "runtime.py"
     runtime_dest.parent.mkdir(parents=True, exist_ok=True)
     src_runtime = Path(__file__).resolve().parent / "runtime.py"
     shutil.copy2(src_runtime, runtime_dest)
     runtime_dest.chmod(0o755)
 
     # 2. Install global skills
-    agents_skill_dir = user_home / ".agents" / "skills" / "prolong"
+    agents_skill_dir = user_home / ".agents" / "skills" / "longmem"
     _copy_skill_templates(agents_skill_dir)
 
-    claude_skill_dir = user_home / ".claude" / "skills" / "prolong"
+    claude_skill_dir = user_home / ".claude" / "skills" / "longmem"
     _copy_skill_templates(claude_skill_dir)
 
-    codex_skill_dir = user_home / ".codex" / "skills" / "prolong"
+    codex_skill_dir = user_home / ".codex" / "skills" / "longmem"
     _copy_skill_templates(codex_skill_dir)
 
     # 3. Client hooks & instructions
@@ -308,12 +308,12 @@ def init_global(
             str(codex_skill_dir / "SKILL.md"),
         ],
     }
-    write_json_file(user_home / ".prolong" / "install.json", manifest)
+    write_json_file(user_home / ".longmem" / "install.json", manifest)
     return manifest
 
 
 def uninstall_global(home: Path | None = None, purge: bool = False) -> None:
-    """Uninstall PRO-LONG globally."""
+    """Uninstall LongMem globally."""
     user_home = (home or Path.home()).resolve()
 
     uninstall_claude_hooks(user_home)
@@ -324,39 +324,39 @@ def uninstall_global(home: Path | None = None, purge: bool = False) -> None:
     remove_managed_file_block(user_home / ".agents" / "AGENTS.md")
 
     for skill_dir in (
-        user_home / ".agents" / "skills" / "prolong",
-        user_home / ".claude" / "skills" / "prolong",
-        user_home / ".codex" / "skills" / "prolong",
+        user_home / ".agents" / "skills" / "longmem",
+        user_home / ".claude" / "skills" / "longmem",
+        user_home / ".codex" / "skills" / "longmem",
     ):
         if skill_dir.exists():
             shutil.rmtree(skill_dir, ignore_errors=True)
 
-    (user_home / ".prolong" / "runtime.py").unlink(missing_ok=True)
-    (user_home / ".prolong" / "install.json").unlink(missing_ok=True)
+    (user_home / ".longmem" / "runtime.py").unlink(missing_ok=True)
+    (user_home / ".longmem" / "install.json").unlink(missing_ok=True)
 
     if purge:
-        shutil.rmtree(user_home / ".prolong", ignore_errors=True)
+        shutil.rmtree(user_home / ".longmem", ignore_errors=True)
 
 
 deinit_global = uninstall_global
 
 
 def check_global_status(home: Path | None = None) -> dict[str, Any]:
-    """Check global PRO-LONG status."""
+    """Check global LongMem status."""
     user_home = (home or Path.home()).resolve()
-    manifest_path = user_home / ".prolong" / "install.json"
-    runtime_path = user_home / ".prolong" / "runtime.py"
+    manifest_path = user_home / ".longmem" / "install.json"
+    runtime_path = user_home / ".longmem" / "runtime.py"
 
     has_manifest = manifest_path.exists()
     runtime_exists = runtime_path.exists()
-    agents_skill_exists = (user_home / ".agents" / "skills" / "prolong" / "SKILL.md").exists()
-    claude_skill_exists = (user_home / ".claude" / "skills" / "prolong" / "SKILL.md").exists()
+    agents_skill_exists = (user_home / ".agents" / "skills" / "longmem" / "SKILL.md").exists()
+    claude_skill_exists = (user_home / ".claude" / "skills" / "longmem" / "SKILL.md").exists()
 
     claude_settings = read_json_file(user_home / ".claude" / "settings.json")
     claude_hooks = claude_settings.get("hooks", {})
     claude_installed = all(
         isinstance(claude_hooks.get(ev), list)
-        and any(is_prolong_hook_group(g, "claude-code") for g in claude_hooks[ev])
+        and any(is_longmem_hook_group(g, "claude-code") for g in claude_hooks[ev])
         for ev in CLAUDE_HOOK_EVENTS
     )
 
@@ -364,7 +364,7 @@ def check_global_status(home: Path | None = None) -> dict[str, Any]:
     codex_hooks = codex_config.get("hooks", {})
     codex_installed = all(
         isinstance(codex_hooks.get(ev), list)
-        and any(is_prolong_hook_group(g, "codex") for g in codex_hooks[ev])
+        and any(is_longmem_hook_group(g, "codex") for g in codex_hooks[ev])
         for ev in CODEX_HOOK_EVENTS
     )
 
@@ -396,42 +396,42 @@ def init_project(
     root: Path,
     clients: list[str] | None = None,
 ) -> dict[str, Any]:
-    """Initialize PRO-LONG in a specific project."""
+    """Initialize LongMem in a specific project."""
     project_root = root.resolve()
     target_clients = normalize_clients(clients if clients is not None else detect_clients(project_root))
 
-    # 1. Initialize .prolong folder and .gitignore
-    prolong_dir = project_root / ".prolong"
-    prolong_dir.mkdir(parents=True, exist_ok=True)
-    gitignore = prolong_dir / ".gitignore"
+    # 1. Initialize .longmem folder and .gitignore
+    longmem_dir = project_root / ".longmem"
+    longmem_dir.mkdir(parents=True, exist_ok=True)
+    gitignore = longmem_dir / ".gitignore"
     if not gitignore.exists():
         gitignore.write_text("*\n", encoding="utf-8")
-    log_file = prolong_dir / "log.jsonl"
+    log_file = longmem_dir / "log.jsonl"
     if not log_file.exists():
         log_file.touch()
 
     # 2. Runtime script
-    runtime_dest = prolong_dir / "runtime.py"
+    runtime_dest = longmem_dir / "runtime.py"
     src_runtime = Path(__file__).resolve().parent / "runtime.py"
     shutil.copy2(src_runtime, runtime_dest)
     runtime_dest.chmod(0o755)
 
     # 3. Project skills
-    skill_dir = project_root / ".agents" / "skills" / "prolong"
+    skill_dir = project_root / ".agents" / "skills" / "longmem"
     _copy_skill_templates(skill_dir)
 
     # 4. Client hooks & instructions
     installed_clients: list[str] = []
 
     if "claude-code" in target_clients:
-        install_claude_hooks(project_root, "${CLAUDE_PROJECT_DIR}/.prolong/runtime.py")
+        install_claude_hooks(project_root, "${CLAUDE_PROJECT_DIR}/.longmem/runtime.py")
         update_managed_file(project_root / "CLAUDE.md", INSTRUCTIONS_BLOCK)
         installed_clients.append("claude-code")
 
     if "codex" in target_clients:
         install_codex_hooks(
             project_root,
-            '$(git rev-parse --show-toplevel 2>/dev/null || pwd)/.prolong/runtime.py',
+            '$(git rev-parse --show-toplevel 2>/dev/null || pwd)/.longmem/runtime.py',
         )
         update_managed_file(project_root / "AGENTS.md", INSTRUCTIONS_BLOCK)
         installed_clients.append("codex")
@@ -441,16 +441,16 @@ def init_project(
         "version": PACKAGE_VERSION,
         "scope": "project",
         "clients": installed_clients,
-        "runtime": ".prolong/runtime.py",
-        "log": ".prolong/log.jsonl",
-        "skill": ".agents/skills/prolong/SKILL.md",
+        "runtime": ".longmem/runtime.py",
+        "log": ".longmem/log.jsonl",
+        "skill": ".agents/skills/longmem/SKILL.md",
     }
-    write_json_file(prolong_dir / "install.json", manifest)
+    write_json_file(longmem_dir / "install.json", manifest)
     return manifest
 
 
 def uninstall_project(root: Path, purge: bool = False) -> None:
-    """Uninstall PRO-LONG from a project."""
+    """Uninstall LongMem from a project."""
     project_root = root.resolve()
 
     uninstall_claude_hooks(project_root)
@@ -459,30 +459,30 @@ def uninstall_project(root: Path, purge: bool = False) -> None:
     uninstall_codex_hooks(project_root)
     remove_managed_file_block(project_root / "AGENTS.md")
 
-    skill_dir = project_root / ".agents" / "skills" / "prolong"
+    skill_dir = project_root / ".agents" / "skills" / "longmem"
     if skill_dir.exists():
         shutil.rmtree(skill_dir, ignore_errors=True)
 
-    prolong_dir = project_root / ".prolong"
-    (prolong_dir / "runtime.py").unlink(missing_ok=True)
-    (prolong_dir / "install.json").unlink(missing_ok=True)
+    longmem_dir = project_root / ".longmem"
+    (longmem_dir / "runtime.py").unlink(missing_ok=True)
+    (longmem_dir / "install.json").unlink(missing_ok=True)
 
     if purge:
-        shutil.rmtree(prolong_dir, ignore_errors=True)
+        shutil.rmtree(longmem_dir, ignore_errors=True)
 
 
 deinit_project = uninstall_project
 
 
 def check_project_status(root: Path) -> dict[str, Any]:
-    """Check status of PRO-LONG in a project."""
+    """Check status of LongMem in a project."""
     project_root = root.resolve()
-    prolong_dir = project_root / ".prolong"
-    manifest_path = prolong_dir / "install.json"
-    runtime_path = prolong_dir / "runtime.py"
-    log_path = prolong_dir / "log.jsonl"
-    gitignore_path = prolong_dir / ".gitignore"
-    skill_path = project_root / ".agents" / "skills" / "prolong" / "SKILL.md"
+    longmem_dir = project_root / ".longmem"
+    manifest_path = longmem_dir / "install.json"
+    runtime_path = longmem_dir / "runtime.py"
+    log_path = longmem_dir / "log.jsonl"
+    gitignore_path = longmem_dir / ".gitignore"
+    skill_path = project_root / ".agents" / "skills" / "longmem" / "SKILL.md"
 
     has_manifest = manifest_path.exists()
     runtime_exists = runtime_path.exists()
@@ -494,7 +494,7 @@ def check_project_status(root: Path) -> dict[str, Any]:
     claude_hooks = claude_settings.get("hooks", {})
     claude_installed = all(
         isinstance(claude_hooks.get(ev), list)
-        and any(is_prolong_hook_group(g, "claude-code") for g in claude_hooks[ev])
+        and any(is_longmem_hook_group(g, "claude-code") for g in claude_hooks[ev])
         for ev in CLAUDE_HOOK_EVENTS
     )
 
@@ -502,7 +502,7 @@ def check_project_status(root: Path) -> dict[str, Any]:
     codex_hooks = codex_config.get("hooks", {})
     codex_installed = all(
         isinstance(codex_hooks.get(ev), list)
-        and any(is_prolong_hook_group(g, "codex") for g in codex_hooks[ev])
+        and any(is_longmem_hook_group(g, "codex") for g in codex_hooks[ev])
         for ev in CODEX_HOOK_EVENTS
     )
 

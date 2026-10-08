@@ -1,1 +1,1 @@
-"""Test suite for PRO-LONG."""
+"""Test suite for LongMem."""

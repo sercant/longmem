@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 
-from prolong.constants import BLOCK_END, BLOCK_START
+from longmem.constants import BLOCK_END, BLOCK_START
 
 BLOCK_PATTERN = re.compile(
     rf"{re.escape(BLOCK_START)}[\s\S]*?{re.escape(BLOCK_END)}\n?",

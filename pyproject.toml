@@ -3,14 +3,14 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "prolong"
+name = "longmem"
 version = "0.1.1"
 description = "Append-only, searchable memory for long coding-agent sessions."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [
-    { name = "PRO-LONG contributors" }
+    { name = "LongMem contributors" }
 ]
 keywords = ["coding-agent", "codex", "claude-code", "memory", "jsonl"]
 classifiers = [
@@ -24,10 +24,10 @@ classifiers = [
 dependencies = []
 
 [project.scripts]
-prolong = "prolong.cli:main"
+longmem = "longmem.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["prolong*"]
+include = ["longmem*"]
 
 [tool.setuptools.package-data]
-prolong = ["templates/*", "templates/**/*"]
+longmem = ["templates/*", "templates/**/*"]

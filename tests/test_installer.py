@@ -1,10 +1,10 @@
-"""Unit tests for PRO-LONG installer and uninstaller."""
+"""Unit tests for LongMem installer and uninstaller."""
 import json
 import tempfile
 import unittest
 from pathlib import Path
 
-from prolong.installer import (
+from longmem.installer import (
     check_global_status,
     check_project_status,
     init_global,
@@ -64,30 +64,30 @@ class TestInstaller(unittest.TestCase):
         self.assertIn("codex", manifest["clients"])
 
         # Verify global runtime
-        runtime_path = self.home / ".prolong" / "runtime.py"
+        runtime_path = self.home / ".longmem" / "runtime.py"
         self.assertTrue(runtime_path.exists())
 
         # Verify skills
-        self.assertTrue((self.home / ".claude" / "skills" / "prolong" / "SKILL.md").exists())
-        self.assertTrue((self.home / ".agents" / "skills" / "prolong" / "SKILL.md").exists())
+        self.assertTrue((self.home / ".claude" / "skills" / "longmem" / "SKILL.md").exists())
+        self.assertTrue((self.home / ".agents" / "skills" / "longmem" / "SKILL.md").exists())
 
-        # Verify claude settings kept the other hook and added prolong
+        # Verify claude settings kept the other hook and added longmem
         updated_claude = json.loads((claude_dir / "settings.json").read_text(encoding="utf-8"))
         self.assertEqual(updated_claude["permissions"]["defaultMode"], "auto")
         session_start_groups = updated_claude["hooks"]["SessionStart"]
-        self.assertEqual(len(session_start_groups), 2, "existing hook plus prolong hook")
+        self.assertEqual(len(session_start_groups), 2, "existing hook plus longmem hook")
         self.assertEqual(session_start_groups[0]["hooks"][0]["command"], "python3 /some/other/hook.py")
-        self.assertIn("prolong/runtime.py", session_start_groups[1]["hooks"][0]["args"][0])
+        self.assertIn("longmem/runtime.py", session_start_groups[1]["hooks"][0]["args"][0])
 
-        # Verify CLAUDE.md kept existing rules and appended prolong
+        # Verify CLAUDE.md kept existing rules and appended longmem
         claude_md = (claude_dir / "CLAUDE.md").read_text(encoding="utf-8")
         self.assertIn("# Existing user guidelines", claude_md)
-        self.assertIn("<!-- prolong:start -->", claude_md)
+        self.assertIn("<!-- longmem:start -->", claude_md)
 
         # Verify codex AGENTS.md
         agents_md = (codex_dir / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("# Existing codex rules", agents_md)
-        self.assertIn("<!-- prolong:start -->", agents_md)
+        self.assertIn("<!-- longmem:start -->", agents_md)
 
         # Check status
         status = check_global_status(home=self.home)
@@ -103,12 +103,12 @@ class TestInstaller(unittest.TestCase):
         # Uninstall global
         uninstall_global(home=self.home, purge=False)
         claude_after_un = json.loads((claude_dir / "settings.json").read_text(encoding="utf-8"))
-        self.assertEqual(len(claude_after_un["hooks"]["SessionStart"]), 1, "prolong hook removed, other preserved")
+        self.assertEqual(len(claude_after_un["hooks"]["SessionStart"]), 1, "longmem hook removed, other preserved")
         self.assertEqual(claude_after_un["hooks"]["SessionStart"][0]["hooks"][0]["command"], "python3 /some/other/hook.py")
 
         claude_md_after = (claude_dir / "CLAUDE.md").read_text(encoding="utf-8")
         self.assertIn("# Existing user guidelines", claude_md_after)
-        self.assertNotIn("prolong:start", claude_md_after)
+        self.assertNotIn("longmem:start", claude_md_after)
 
     def test_project_init_and_uninstall(self):
         project = self.home / "my-project"
@@ -120,16 +120,16 @@ class TestInstaller(unittest.TestCase):
         self.assertTrue(status["gitignore_exists"])
         self.assertTrue(status["log_exists"])
 
-        gitignore_content = (project / ".prolong" / ".gitignore").read_text(encoding="utf-8")
+        gitignore_content = (project / ".longmem" / ".gitignore").read_text(encoding="utf-8")
         self.assertEqual(gitignore_content, "*\n")
 
         uninstall_project(project, purge=False)
         # Log should be preserved
-        self.assertTrue((project / ".prolong" / "log.jsonl").exists())
+        self.assertTrue((project / ".longmem" / "log.jsonl").exists())
 
         uninstall_project(project, purge=True)
-        # With purge, .prolong is removed
-        self.assertFalse((project / ".prolong").exists())
+        # With purge, .longmem is removed
+        self.assertFalse((project / ".longmem").exists())
 
 
 if __name__ == "__main__":
