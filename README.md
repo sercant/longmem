@@ -24,19 +24,19 @@ Works natively with **Claude Code** and **Codex**. Pure Python 3 (standard libra
 
 ## Quick Start
 
-### 1. Run directly with uvx (Zero Installation)
+### 1. Run directly with `uv tool run` (Zero Installation)
 
-`uvx` builds `longmem` from the GitHub repository in an isolated environment and runs it without requiring manual installation. Prefix any command with `uvx --from git+ssh://git@github.com/sercant/longmem`:
+`uv tool run` builds `longmem` from the GitHub repository in an isolated environment and runs it without requiring manual installation. Prefix any command with `uv tool run --from git+ssh://git@github.com/sercant/longmem`:
 
 ```bash
 # Check version
-uvx --from git+ssh://git@github.com/sercant/longmem longmem --version
+uv tool run --from git+ssh://git@github.com/sercant/longmem longmem --version
 
 # Initialize globally
-uvx --from git+ssh://git@github.com/sercant/longmem longmem init --global
+uv tool run --from git+ssh://git@github.com/sercant/longmem longmem init --global
 
 # Check global status
-uvx --from git+ssh://git@github.com/sercant/longmem longmem status --global
+uv tool run --from git+ssh://git@github.com/sercant/longmem longmem status --global
 ```
 
 To pin a branch, tag, or commit, append `@<ref>` to the URL, e.g. `git+ssh://git@github.com/sercant/longmem@develop`.
@@ -45,6 +45,9 @@ To pin a branch, tag, or commit, append `@<ref>` to the URL, e.g. `git+ssh://git
 
 ```bash
 # Install as a global CLI tool via uv
+uv tool install git+ssh://git@github.com/sercant/longmem
+
+# Or install editable from a local checkout
 uv tool install --editable /path/to/longmem
 
 # Or install in active virtualenv
@@ -163,14 +166,14 @@ longmem status --json
 ### `deinit` (alias: `uninstall`)
 ```bash
 # Deinitialize globally (preserves logs)
-uvx --from git+ssh://git@github.com/sercant/longmem longmem deinit --global
+uv tool run --from git+ssh://git@github.com/sercant/longmem longmem deinit --global
 # or: longmem deinit --global
 
 # Deinitialize globally and purge ~/.longmem
-uvx --from git+ssh://git@github.com/sercant/longmem longmem deinit --global --purge
+uv tool run --from git+ssh://git@github.com/sercant/longmem longmem deinit --global --purge
 
 # Deinitialize from a specific project
-uvx --from git+ssh://git@github.com/sercant/longmem longmem deinit --dir /path/to/project [--purge]
+uv tool run --from git+ssh://git@github.com/sercant/longmem longmem deinit --dir /path/to/project [--purge]
 ```
 
 ---
